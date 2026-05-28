@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Civil 3D — Command Reference</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Syne:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:#0D1117; --bg2:#161B22; --bg3:#1C2128;
+  --border:rgba(255,255,255,0.06); --border2:rgba(255,255,255,0.1);
+  --text:#E6EDF3; --muted:#7D8590; --hint:#484F58;
+  --draft:#3FB950; --draft-bg:rgba(63,185,80,0.08); --draft-bd:rgba(63,185,80,0.2);
+  --design:#A371F7; --design-bg:rgba(163,113,247,0.08); --design-bd:rgba(163,113,247,0.2);
+  --accent:#58A6FF; --radius:10px;
+}
+html,body { min-height:100vh; background:var(--bg); color:var(--text); font-family:'Syne',sans-serif; }
+.topbar {
+  position:sticky; top:0; z-index:100;
+  background:rgba(13,17,23,0.94); backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border2);
+  padding:14px 24px; display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+}
+.brand { display:flex; align-items:center; gap:10px; flex-shrink:0; }
+.logo {
+  width:32px; height:32px;
+  background:linear-gradient(135deg,#58A6FF,#A371F7);
+  border-radius:8px; display:flex; align-items:center; justify-content:center;
+  font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:600; color:#fff;
+}
+.brand-name { font-size:14px; font-weight:600; color:var(--text); letter-spacing:0.02em; white-space:nowrap; }
+.brand-name span { color:var(--muted); font-weight:400; }
+.divider { width:1px; height:28px; background:var(--border2); flex-shrink:0; }
+.search-wrap { position:relative; flex:1; min-width:200px; max-width:520px; }
+.search-wrap svg { position:absolute; left:11px; top:50%; transform:translateY(-50%); width:15px; height:15px; color:var(--hint); pointer-events:none; }
+#searchInput {
+  width:100%; background:var(--bg3); border:1px solid var(--border2); border-radius:8px;
+  padding:8px 12px 8px 34px; font-size:13px; font-family:'Syne',sans-serif;
+  color:var(--text); outline:none; transition:border-color 0.15s;
+}
+#searchInput:focus { border-color:var(--accent); }
+#searchInput::placeholder { color:var(--hint); }
+.filters { display:flex; gap:4px; flex-shrink:0; }
+.fbtn {
+  padding:6px 14px; border-radius:7px; border:1px solid var(--border2);
+  background:var(--bg3); color:var(--muted); font-size:12px;
+  font-family:'Syne',sans-serif; font-weight:500; cursor:pointer; transition:all 0.12s; white-space:nowrap;
+}
+.fbtn:hover { color:var(--text); border-color:rgba(255,255,255,0.2); }
+.fbtn.f-all.on    { background:rgba(88,166,255,0.1); color:var(--accent); border-color:rgba(88,166,255,0.3); }
+.fbtn.f-draft.on  { background:var(--draft-bg); color:var(--draft); border-color:var(--draft-bd); }
+.fbtn.f-design.on { background:var(--design-bg); color:var(--design); border-color:var(--design-bd); }
+.stats { margin-left:auto; font-size:11px; color:var(--hint); white-space:nowrap; flex-shrink:0; }
+.container { max-width:1400px; margin:0 auto; padding:20px 24px 40px; }
+.grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:8px; }
+.card {
+  background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius);
+  padding:13px 15px; transition:border-color 0.12s,background 0.12s; cursor:default;
+}
+.card:hover { border-color:var(--border2); background:var(--bg3); }
+.card-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:7px; gap:8px; }
+.cmd { font-family:'JetBrains Mono',monospace; font-size:13.5px; font-weight:600; letter-spacing:0.04em; }
+.cmd.drafting { color:var(--draft); }
+.cmd.design   { color:var(--design); }
+.card-right { display:flex; align-items:center; gap:6px; }
+.badge { font-size:9px; padding:2px 8px; border-radius:20px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; }
+.badge.drafting { background:var(--draft-bg); color:var(--draft); border:1px solid var(--draft-bd); }
+.badge.design   { background:var(--design-bg); color:var(--design); border:1px solid var(--design-bd); }
+.copy-btn {
+  opacity:0; background:var(--bg3); border:1px solid var(--border2); border-radius:5px;
+  color:var(--muted); cursor:pointer; padding:3px 7px; font-size:10px;
+  font-family:'Syne',sans-serif; font-weight:500; transition:all 0.12s; white-space:nowrap;
+}
+.card:hover .copy-btn { opacity:1; }
+.copy-btn:hover { color:var(--text); border-color:rgba(255,255,255,0.25); }
+.copy-btn.ok { color:var(--draft); border-color:var(--draft-bd); }
+.problem-label { font-size:9px; text-transform:uppercase; letter-spacing:0.08em; color:var(--hint); margin-bottom:2px; }
+.problem-text  { font-size:12px; color:var(--muted); line-height:1.45; margin-bottom:5px; }
+.solution-text { font-size:12px; color:var(--text); line-height:1.5; opacity:0.82; }
+mark { background:rgba(88,166,255,0.2); color:var(--accent); border-radius:2px; padding:0 1px; }
+.no-results { grid-column:1/-1; text-align:center; padding:4rem 1rem; color:var(--hint); font-size:14px; }
+.footer { text-align:center; padding:16px; font-size:11px; color:var(--hint); border-top:1px solid var(--border); }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="brand">
+    <div class="logo">C3D</div>
+    <span class="brand-name">Civil 3D <span>Command Reference</span></span>
+  </div>
+  <div class="divider"></div>
+  <div class="search-wrap">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"/></svg>
+    <input type="text" id="searchInput" placeholder="Search command or problem..." autocomplete="off" />
+  </div>
+  <div class="filters">
+    <button class="fbtn f-all on"  id="btn-all">All</button>
+    <button class="fbtn f-draft"   id="btn-drafting">Drafting</button>
+    <button class="fbtn f-design"  id="btn-design">Design</button>
+  </div>
+  <div class="stats" id="stats"></div>
+</div>
+<div class="container"><div class="grid" id="grid"></div></div>
+<div class="footer">AutoCAD Civil 3D &mdash; Command Reference &nbsp;&middot;&nbsp; Updated via Excel macro</div>
+<script>
+// ============================================================
+// Civil 3D Command Reference — commands.js
+// Total commands: 392
+// ============================================================
+
+const COMMANDS = [
+  { cmd: "OVERKILL", category: "drafting", problem: "Drawing has duplicate or overlapping linework causing hatching or area errors", solution: "Removes duplicate objects and merges overlapping collinear lines automatically" },
+  { cmd: "NCOPY", category: "drafting", problem: "Need to copy geometry that is nested inside a block or xref without exploding it", solution: "Extracts and copies nested objects from blocks or xrefs directly into the current drawing" },
+  { cmd: "QSELECT", category: "drafting", problem: "Need to select all objects that share a specific property across the entire drawing", solution: "Opens Quick Select to build a selection set based on object type, layer, color, linetype, or any property" },
+  { cmd: "FILTER", category: "drafting", problem: "Need complex multi-criteria selection that QSELECT cannot handle", solution: "Opens the Object Selection Filters dialog for advanced AND/OR filter logic across multiple properties" },
+  { cmd: "SELECTSIMILAR", category: "drafting", problem: "Need to select all objects that match the same type and properties as a picked object", solution: "Right-click shortcut that selects all objects matching the selected object's type and layer" },
+  { cmd: "ISOLATEOBJECTS", category: "drafting", problem: "Need to work on specific objects while hiding everything else temporarily", solution: "Hides all objects except the selected ones — use UNISOLATEOBJECTS to restore" },
+  { cmd: "UNISOLATEOBJECTS", category: "drafting", problem: "Objects were hidden with ISOLATEOBJECTS and need to be restored", solution: "Restores all objects hidden by the Isolate Objects command" },
+  { cmd: "HIDEOBJECTS", category: "drafting", problem: "Need to hide specific objects without changing their layer", solution: "Hides selected objects individually without affecting the layer state" },
+  { cmd: "ADDSELECTED", category: "drafting", problem: "Need to create a new object with the exact same properties as an existing one", solution: "Creates a new object of the same type and properties as the selected object" },
+  { cmd: "CHPROP", category: "drafting", problem: "Need to change multiple properties of an object from the command line without opening Properties", solution: "Changes color, layer, linetype, lineweight, and thickness via command line prompts" },
+  { cmd: "GATTE", category: "drafting", problem: "Need to change the value of a block attribute globally across all instances in the drawing", solution: "Global Attribute Edit — changes attribute values on all matching block references at once (Express Tools)" },
+  { cmd: "PROPULATE", category: "drafting", problem: "Need to fill block attributes automatically based on object data", solution: "Populates attributes in blocks using object data or external databases (Express Tools)" },
+  { cmd: "BURST", category: "drafting", problem: "Need to explode a block but keep its attribute values as text", solution: "Explodes blocks while converting attribute values to regular MTEXT — preserves visible text (Express Tools)" },
+  { cmd: "LAYON", category: "drafting", problem: "All layers turned off and the screen is blank", solution: "Turns on all layers in the drawing simultaneously" },
+  { cmd: "LAYISO", category: "drafting", problem: "Need to focus on specific layers and hide everything else", solution: "Isolates selected layers by hiding all others — non-destructive" },
+  { cmd: "LAYUNISO", category: "drafting", problem: "Layers hidden by LAYISO need to be restored", solution: "Restores all layers previously hidden by the Layer Isolate command" },
+  { cmd: "LAYTHW", category: "drafting", problem: "Some layers are frozen and objects on them are not visible or plotting", solution: "Thaws all frozen layers in all viewports simultaneously" },
+  { cmd: "LAYLCK", category: "drafting", problem: "Need to prevent accidental edits to objects on a specific layer", solution: "Locks the layer of selected objects so they cannot be moved or edited" },
+  { cmd: "LAYULK", category: "drafting", problem: "Layers are locked and objects cannot be edited", solution: "Unlocks the layer of the selected objects" },
+  { cmd: "LAYMCH", category: "drafting", problem: "Objects are on the wrong layer and need to be moved to match another object's layer", solution: "Changes the layer of selected objects to match the layer of a destination object" },
+  { cmd: "LAYCUR", category: "drafting", problem: "Need to quickly move objects to the current active layer", solution: "Moves all selected objects to the current layer without opening Properties" },
+  { cmd: "LAYOFF", category: "drafting", problem: "Need to turn off the layer of a specific object by picking it", solution: "Turns off the layer of any object you click on — faster than using the Layer Manager" },
+  { cmd: "LAYFRE", category: "drafting", problem: "Layer is frozen in the current viewport and objects are not visible", solution: "Thaws the layer of selected objects in the current viewport only" },
+  { cmd: "LAYERP", category: "drafting", problem: "Layer changes were made by mistake and need to be undone", solution: "Restores the previous layer state using the Layer Previous command" },
+  { cmd: "LAYDEL", category: "drafting", problem: "Need to permanently delete a layer that cannot be purged normally", solution: "Deletes a layer and moves its objects to layer 0 — works on layers PURGE cannot remove (Express Tools)" },
+  { cmd: "LAYWALK", category: "drafting", problem: "Need to visually inspect what objects are on each layer", solution: "Temporarily shows only the selected layer and hides all others interactively (Express Tools)" },
+  { cmd: "LAYMERGE", category: "drafting", problem: "Need to combine two layers by moving all objects from one layer to another", solution: "Moves all objects from a source layer to a target layer and deletes the source (Express Tools)" },
+  { cmd: "COPYTOLAYER", category: "drafting", problem: "Need to copy objects to a different layer without moving the originals", solution: "Copies selected objects to a specified layer, optionally at a displacement (Express Tools)" },
+  { cmd: "TEXTFIT", category: "drafting", problem: "Text does not fit within a specific space and needs to be stretched or compressed", solution: "Stretches or compresses text to fit between two specified points without changing height (Express Tools)" },
+  { cmd: "TEXTMASK", category: "drafting", problem: "Text is hard to read because it overlaps linework or hatching", solution: "Creates a wipeout mask behind text objects to improve legibility (Express Tools)" },
+  { cmd: "TORIENT", category: "drafting", problem: "Text in the drawing is rotated in various directions and hard to read", solution: "Reorients text objects so they are always readable from the bottom or right (Express Tools)" },
+  { cmd: "TEXTEXP", category: "drafting", problem: "Text needs to be converted to geometry for export, scaling, or special effects", solution: "Explodes text into individual polyline outlines — useful for logos and custom shapes" },
+  { cmd: "CHTEXT", category: "drafting", problem: "Need to change height, style, or justification on multiple text objects at once", solution: "Changes text properties on multiple selected text objects simultaneously (Express Tools)" },
+  { cmd: "ARCTEXT", category: "drafting", problem: "Need to place text that follows an arc or curved path", solution: "Places text along a selected arc object (Express Tools)" },
+  { cmd: "TFRAMES", category: "drafting", problem: "Need to toggle the visibility of wipeout and image frames for plotting", solution: "Toggles frames on or off for all wipeout and image objects — useful before plotting" },
+  { cmd: "FIND", category: "drafting", problem: "Need to find and replace text strings anywhere in the drawing", solution: "Searches for text in all text, mtext, attributes, and dimension values with optional replace" },
+  { cmd: "SPELL", category: "drafting", problem: "Text in the drawing may have spelling errors", solution: "Runs spell check on all text, mtext, and block attributes in the drawing" },
+  { cmd: "TCIRCLE", category: "drafting", problem: "Need to automatically enclose text in a circle or slot boundary", solution: "Draws circles, slots, or rectangles around selected text objects to create bubble callouts (Express Tools)" },
+  { cmd: "TCOUNT", category: "drafting", problem: "Need to add sequential numbers to a series of text objects automatically", solution: "Adds sequential prefix or suffix numbers to multiple selected text objects (Express Tools)" },
+  { cmd: "MKSHAPE", category: "drafting", problem: "Need to convert a linework shape into a reusable SHX shape definition", solution: "Creates a shape definition from selected objects for use in linetypes and SHX files" },
+  { cmd: "CONVERTPSTYLES", category: "drafting", problem: "Drawing uses color-dependent plot styles and needs to be converted to named plot styles", solution: "Converts a drawing from CTB color-dependent plot styles to STB named plot styles" },
+  { cmd: "SCALETEXT", category: "drafting", problem: "Need to resize multiple text objects to a specific height without moving their positions", solution: "Scales text objects to a new height while keeping their insertion points fixed" },
+  { cmd: "JUSTIFYTEXT", category: "drafting", problem: "Text justification needs to be changed without moving the text visually", solution: "Changes the justification of text objects without displacing them from their position" },
+  { cmd: "BATTMAN", category: "drafting", problem: "Block attribute definitions need to be reordered, renamed, or modified", solution: "Opens Block Attribute Manager for editing attribute definitions in block definitions" },
+  { cmd: "ATTSYNC", category: "drafting", problem: "Block instances in the drawing do not reflect updated attribute definitions", solution: "Synchronizes all block references to match the updated attribute definitions in the block" },
+  { cmd: "ATTDISP", category: "drafting", problem: "Block attributes are visible but should be hidden for plotting, or hidden but need to be seen", solution: "Controls attribute visibility globally: Normal, On, or Off for all blocks" },
+  { cmd: "ATTEXT", category: "drafting", problem: "Need to extract attribute data from blocks to a text or CSV file", solution: "Extracts attribute values from all block references into a template-based text file" },
+  { cmd: "DATAEXTRACTION", category: "drafting", problem: "Need to export block attribute data and object properties to a table or spreadsheet", solution: "Extracts properties and attributes from objects into a linked Excel table or CSV file" },
+  { cmd: "WBLOCK", category: "drafting", problem: "Need to save specific objects or a block as a separate DWG file", solution: "Writes selected objects, a block, or the entire drawing to a new external DWG file" },
+  { cmd: "BEDIT", category: "drafting", problem: "Need to edit the geometry or attributes inside a block definition", solution: "Opens the Block Editor for in-place editing of block definitions" },
+  { cmd: "REFEDIT", category: "drafting", problem: "Need to edit geometry inside an xref or block directly in the drawing", solution: "Opens Reference Edit mode to modify block or xref geometry in context" },
+  { cmd: "REFCLOSE", category: "drafting", problem: "Changes made in REFEDIT need to be saved or discarded", solution: "Closes the Reference Edit session and prompts to save or discard changes" },
+  { cmd: "XATTACH", category: "drafting", problem: "Need to attach an external DWG as an xref", solution: "Attaches an external drawing as an xref with options for attachment type, scale, and insertion point" },
+  { cmd: "XREF", category: "drafting", problem: "Need to manage all external references: attach, reload, detach, or bind", solution: "Opens the External References palette for full xref lifecycle management" },
+  { cmd: "XCLIP", category: "drafting", problem: "Only part of an xref or block should be visible in the drawing", solution: "Defines a clipping boundary to show only a portion of an xref or block" },
+  { cmd: "XBIND", category: "drafting", problem: "Named objects from an xref need to be permanently added to the drawing", solution: "Binds specific layers, blocks, or linetypes from an xref into the current drawing" },
+  { cmd: "XOPEN", category: "drafting", problem: "Need to open an xref file for editing directly from the host drawing", solution: "Opens the selected xref in a new drawing editor window for direct editing" },
+  { cmd: "XLIST", category: "drafting", problem: "Need to identify which xref a nested object belongs to", solution: "Lists the xref name and other properties of a nested object inside an xref" },
+  { cmd: "REGEN", category: "drafting", problem: "Objects appear distorted, arcs look segmented, or display is incorrect", solution: "Regenerates the drawing geometry from the database — fixes most display artifacts" },
+  { cmd: "REGENALL", category: "drafting", problem: "Display issues persist in multiple viewports after REGEN", solution: "Regenerates all viewports simultaneously to fix display artifacts everywhere" },
+  { cmd: "REGENAUTO", category: "drafting", problem: "AutoCAD prompts for manual REGEN too often during editing", solution: "Controls whether AutoCAD regenerates automatically — toggle on to avoid manual regens" },
+  { cmd: "ETRANSMIT", category: "drafting", problem: "Drawing needs to be packaged with all xrefs, fonts, and images for sending to others", solution: "Creates a transmittal package containing the drawing and all dependent files" },
+  { cmd: "PURGE", category: "drafting", problem: "Drawing file is bloated with unused layers, blocks, linetypes, or styles", solution: "Removes all unused named objects from the drawing — reduces file size significantly" },
+  { cmd: "AUDIT", category: "drafting", problem: "Drawing has internal database errors or behaves unexpectedly", solution: "Finds and fixes errors in the drawing database — always run before PURGE" },
+  { cmd: "RECOVER", category: "drafting", problem: "Drawing file cannot be opened normally or is corrupted", solution: "Repairs and opens a damaged DWG file by rebuilding the database from scratch" },
+  { cmd: "RECOVERALL", category: "drafting", problem: "Drawing and all its xrefs are corrupted and need repair", solution: "Repairs the host drawing and all attached xrefs in a single operation" },
+  { cmd: "OVERKILL", category: "drafting", problem: "Imported or traced geometry has duplicate overlapping objects", solution: "Removes duplicate geometry and merges collinear overlapping lines — essential after PDF import" },
+  { cmd: "FLATTEN", category: "drafting", problem: "Objects have unexpected Z elevations causing 3D view distortion or plotting issues", solution: "Sets all selected objects to Z=0 — critical when working in 2D after importing 3D data (Express Tools)" },
+  { cmd: "DRAWINGRECOVERY", category: "drafting", problem: "AutoCAD crashed and need to find autosave or backup files", solution: "Opens the Drawing Recovery Manager to access autosave and backup files after a crash" },
+  { cmd: "RESETBLOCK", category: "drafting", problem: "Dynamic block is stuck in a modified state and does not reset to default", solution: "Resets selected dynamic block references to their default state" },
+  { cmd: "OBJECTSCALE", category: "drafting", problem: "Annotative objects do not display at the correct scale in viewports", solution: "Adds or removes annotation scales from selected annotative objects" },
+  { cmd: "ANNORESET", category: "drafting", problem: "Annotative scale representations are misaligned or need to be reset", solution: "Resets the position of all scale representations for selected annotative objects" },
+  { cmd: "ANNOUPDATE", category: "drafting", problem: "Annotative objects do not update after changing the drawing scale", solution: "Updates the positions of all annotative objects to match the current annotation scale" },
+  { cmd: "ALIGN", category: "drafting", problem: "Objects need to be moved and rotated to match reference points on another object", solution: "Moves and rotates objects using 2 or 3 source-destination point pairs in 2D or 3D" },
+  { cmd: "ALIGNSPACE", category: "drafting", problem: "Objects in model space need to be aligned with objects visible in a paper space viewport", solution: "Aligns model space geometry with paper space objects using a viewport as reference" },
+  { cmd: "CHSPACE", category: "drafting", problem: "Objects need to be moved between model space and paper space through a viewport", solution: "Transfers objects between spaces while maintaining their visual size on paper" },
+  { cmd: "MOCORO", category: "drafting", problem: "Need to Move, Copy, Rotate, and Scale an object in one combined operation", solution: "Combines four transform operations into a single interactive command (Express Tools)" },
+  { cmd: "MSTRETCH", category: "drafting", problem: "Need to stretch multiple objects using different crossing windows at once", solution: "Performs multiple stretch operations in one command using multiple crossing windows (Express Tools)" },
+  { cmd: "EXTRIM", category: "drafting", problem: "Need to trim all objects on one side of a cutting edge quickly", solution: "Trims all objects crossing a selected cutting line on the specified side (Express Tools)" },
+  { cmd: "BREAKATPOINT", category: "drafting", problem: "A line or arc needs to be split at a single point into two separate objects", solution: "Breaks an object at a single specified point without removing any geometry" },
+  { cmd: "JOINPLINE", category: "drafting", problem: "Multiple polyline segments are not joined and need to be combined", solution: "Joins multiple polylines, lines, and arcs into a single continuous polyline (Express Tools)" },
+  { cmd: "MKREGION", category: "drafting", problem: "Need to convert closed geometry into a region for Boolean operations", solution: "Converts closed 2D geometry (polylines, lines, arcs) into region objects" },
+  { cmd: "REVERSE", category: "drafting", problem: "Linetype or polyline direction is wrong and needs to be flipped", solution: "Reverses the direction of selected lines, polylines, or splines — fixes directional linetypes" },
+  { cmd: "SUPERHATCH", category: "drafting", problem: "Need to use a custom image, block, or xref as a hatch fill pattern", solution: "Creates hatch patterns using images, blocks, or external references as repeating tiles" },
+  { cmd: "HATCHEDIT", category: "drafting", problem: "An existing hatch needs to be modified — pattern, scale, angle, or boundary", solution: "Edits hatch properties including pattern, scale, angle, and origin for selected hatches" },
+  { cmd: "HATCHGENERATEBOUNDARY", category: "drafting", problem: "Need to recreate the boundary polyline of an existing hatch that was deleted", solution: "Generates a new boundary polyline around an existing hatch object" },
+  { cmd: "SETBYLAYER", category: "drafting", problem: "Objects have hardcoded colors and linetypes instead of ByLayer — need to reset", solution: "Changes object properties to ByLayer, ByBlock, or a specific property in batch" },
+  { cmd: "MATCHPROP", category: "drafting", problem: "Need to copy all properties from one object to multiple others quickly", solution: "Copies layer, color, linetype, lineweight, and other properties from source to target objects" },
+  { cmd: "POINTLIGHT", category: "drafting", problem: "Need to add a point light source for realistic rendering in model space", solution: "Creates a point light that emits light in all directions from a single location" },
+  { cmd: "GRIPS", category: "drafting", problem: "Need to configure grip behavior — size, color, or enable/disable", solution: "Controls grip display settings through system variables GRIPOBJLIMIT and GRIPSIZE" },
+  { cmd: "SNAPANG", category: "drafting", problem: "Grid and snap need to be rotated to match a non-orthogonal alignment", solution: "Sets the snap and grid rotation angle without changing the UCS" },
+  { cmd: "DIMJOGLINE", category: "drafting", problem: "A linear dimension needs a jog symbol to indicate a foreshortened distance", solution: "Adds a jog symbol to an existing linear or aligned dimension" },
+  { cmd: "DIMREASSOC", category: "drafting", problem: "Dimensions have lost their associativity and no longer update when geometry changes", solution: "Reassociates selected dimensions with the geometry they are supposed to measure" },
+  { cmd: "DIMREGEN", category: "drafting", problem: "Dimension values appear incorrect after geometry changes", solution: "Regenerates all associative dimensions to update their values based on current geometry" },
+  { cmd: "QDIM", category: "drafting", problem: "Need to quickly add multiple dimensions to a series of objects at once", solution: "Creates multiple dimensions simultaneously by selecting geometry and specifying type" },
+  { cmd: "QLEADER", category: "drafting", problem: "Need to add a quick leader annotation without configuring a multileader style", solution: "Creates a simple leader with text using legacy leader settings" },
+  { cmd: "MLEADERALIGN", category: "drafting", problem: "Multiple multileaders are at different positions and need to be aligned", solution: "Aligns selected multileader objects along a common line or spacing" },
+  { cmd: "MLEADERCOLLECT", category: "drafting", problem: "Multiple single-content multileaders need to be combined into one grouped leader", solution: "Collects multiple multileaders into a single multileader with multiple leaders" },
+  { cmd: "DIMSPACE", category: "drafting", problem: "Parallel dimensions are unevenly spaced and need to be equalized", solution: "Adjusts the spacing between selected parallel or stacked dimensions to an equal value" },
+  { cmd: "DIMBREAK", category: "drafting", problem: "Dimension lines cross other geometry and need a break gap added", solution: "Adds break gaps to dimension lines where they cross other objects" },
+  { cmd: "CENTERMARK", category: "drafting", problem: "Circle or arc needs a center mark added that stays associative", solution: "Creates an associative center mark on a circle or arc that updates when geometry changes" },
+  { cmd: "CENTERLINE", category: "drafting", problem: "Need to add a centerline between two parallel lines that stays associative", solution: "Creates an associative centerline between two selected parallel lines or polyline segments" },
+  { cmd: "MVIEW", category: "drafting", problem: "Need to create, clip, or manage viewports on a paper space layout", solution: "Creates new viewports or modifies existing ones — supports polygonal and object-based clipping" },
+  { cmd: "VPORTS", category: "drafting", problem: "Need to create multiple tiled viewports in model space for different views", solution: "Creates and configures tiled viewport arrangements in model space" },
+  { cmd: "VPCLIP", category: "drafting", problem: "A viewport needs to be clipped to an irregular polygonal boundary", solution: "Clips a viewport to a polygon, circle, or other closed object boundary" },
+  { cmd: "VPLAYER", category: "drafting", problem: "A layer needs to be frozen only in specific viewports, not globally", solution: "Controls layer visibility per viewport — freeze a layer in one viewport without affecting others" },
+  { cmd: "VPROTATEASSOC", category: "drafting", problem: "Annotation in a rotated viewport is not aligned correctly", solution: "Controls whether annotative objects rotate with the viewport" },
+  { cmd: "PAGESETUP", category: "drafting", problem: "Plot settings for a layout need to be configured or copied to another layout", solution: "Opens Page Setup Manager to configure plotter, paper size, plot style, and scale per layout" },
+  { cmd: "PUBLISH", category: "drafting", problem: "Multiple layouts or drawings need to be plotted to PDF in one operation", solution: "Publishes a set of drawings or layouts to multi-sheet PDF or physical plotter in batch" },
+  { cmd: "EXPORTPDF", category: "drafting", problem: "Current drawing or specific layouts need to be exported to PDF quickly", solution: "Exports the current drawing to PDF with control over which layouts are included" },
+  { cmd: "PDFIMPORT", category: "drafting", problem: "A PDF file needs to be imported as geometry into the drawing", solution: "Imports vector geometry, text, and images from a PDF into the current drawing" },
+  { cmd: "IMAGEATTACH", category: "drafting", problem: "A raster image needs to be attached to the drawing as a reference", solution: "Attaches raster images (JPG, PNG, TIF, ECW) as external references to the drawing" },
+  { cmd: "IMAGECLIP", category: "drafting", problem: "Only part of an attached image should be visible", solution: "Defines a clipping boundary to show only a portion of an attached image" },
+  { cmd: "IMAGEFRAME", category: "drafting", problem: "Image frames are visible in the drawing but should be hidden for plotting", solution: "Toggles the display and plottability of image frame borders globally" },
+  { cmd: "IMAGEQUALITY", category: "drafting", problem: "Attached images appear pixelated or slow to display", solution: "Controls whether images are displayed in high or draft quality" },
+  { cmd: "DWGPROPS", category: "drafting", problem: "Drawing properties like author, title, or custom properties need to be set", solution: "Opens the Drawing Properties dialog to set metadata used in title blocks and transmittals" },
+  { cmd: "VIEWBASE", category: "drafting", problem: "2D orthographic views need to be generated from a 3D model for documentation", solution: "Creates base and projected 2D views from a 3D solid model placed on a layout" },
+  { cmd: "VIEWEDIT", category: "drafting", problem: "An existing model documentation view needs to be modified", solution: "Edits the properties of a selected model documentation view" },
+  { cmd: "VIEWUPDATE", category: "drafting", problem: "Model documentation views are out of date after geometry changes", solution: "Updates selected model documentation views to reflect current model geometry" },
+  { cmd: "PLOT", category: "drafting", problem: "Need to plot the current drawing or layout to a plotter or PDF", solution: "Opens the Plot dialog with all print configuration options for the current layout" },
+  { cmd: "PREVIEW", category: "drafting", problem: "Need to see exactly how the drawing will look when plotted before printing", solution: "Shows a full print preview of the current layout with all plot settings applied" },
+  { cmd: "PLOTTERMANAGER", category: "drafting", problem: "Need to add, configure, or manage plotter drivers and PC3 files", solution: "Opens the Plotter Manager folder to add and configure plotters and PDF drivers" },
+  { cmd: "STYLESMANAGER", category: "drafting", problem: "Plot style tables (CTB or STB files) need to be created or edited", solution: "Opens the Plot Styles folder to create and edit color-dependent or named plot styles" },
+  { cmd: "PLOTSTAMP", category: "drafting", problem: "Need to add a drawing name, date, or scale stamp to plots automatically", solution: "Configures a plot stamp that is automatically added to each plotted sheet" },
+  { cmd: "BATCHPLT", category: "drafting", problem: "Multiple DWG files need to be plotted from a batch list without opening each one", solution: "Batch plots multiple drawing files using a BPL batch plot list (Express Tools)" },
+  { cmd: "CLEANSCREENON", category: "drafting", problem: "Need maximum drawing area by hiding all toolbars and palettes", solution: "Toggles clean screen mode — hides all interface elements except the command line" },
+  { cmd: "CLEANSCREENOFF", category: "drafting", problem: "Clean screen mode is active and toolbars need to be restored", solution: "Restores all toolbars and palettes after Clean Screen was toggled on" },
+  { cmd: "WORKSPACE", category: "drafting", problem: "Need to switch between different workspace configurations (Drafting, 3D Modeling)", solution: "Switches between saved workspace configurations from the command line" },
+  { cmd: "CUILOAD", category: "drafting", problem: "A custom CUI file with additional commands needs to be loaded", solution: "Loads an additional CUI customization file to add commands and interface elements" },
+  { cmd: "CUI", category: "drafting", problem: "Need to create custom commands, toolbars, or keyboard shortcuts", solution: "Opens the Customize User Interface editor for full interface customization" },
+  { cmd: "MENULOAD", category: "drafting", problem: "A legacy MNU or MNS menu file needs to be loaded", solution: "Loads a legacy AutoCAD menu file into the current session" },
+  { cmd: "OPTIONS", category: "drafting", problem: "AutoCAD system settings need to be configured — file paths, display, performance", solution: "Opens the Options dialog for complete system configuration" },
+  { cmd: "SYSVARMONITOR", category: "drafting", problem: "System variables have been changed from standard values and need monitoring", solution: "Opens the System Variable Monitor to track and restore changed system variables" },
+  { cmd: "SYSVDLG", category: "drafting", problem: "Need to browse and change system variables from a searchable dialog", solution: "Opens the System Variables dialog listing all variables with descriptions (Express Tools)" },
+  { cmd: "VPMAX", category: "drafting", problem: "Need to maximize a paper space viewport to work in model space", solution: "Maximizes the current viewport for easier model space editing from a layout" },
+  { cmd: "VPMIN", category: "drafting", problem: "A maximized viewport needs to be restored to the layout view", solution: "Restores the viewport to normal paper space layout view after VPMAX" },
+  { cmd: "TASKBAR", category: "drafting", problem: "Multiple open drawings need taskbar buttons for quick switching", solution: "Controls whether each open drawing appears as a separate button in the Windows taskbar" },
+  { cmd: "QUICKCALC", category: "drafting", problem: "Need a calculator that can use coordinates and object snap values in calculations", solution: "Opens the QuickCalc palette which integrates with object snaps for geometric calculations" },
+  { cmd: "MEASUREGEOM", category: "drafting", problem: "Need to measure distance, radius, angle, area, or volume of objects quickly", solution: "Measures geometric properties of selected objects and areas with running totals" },
+  { cmd: "ID", category: "drafting", problem: "Need to get the exact X Y Z coordinate of a point in the drawing", solution: "Displays the absolute coordinate of a picked point in the current UCS" },
+  { cmd: "DIST", category: "drafting", problem: "Need to measure the distance and angle between two points", solution: "Displays the distance, delta XYZ, and angle between two picked points" },
+  { cmd: "AREA", category: "drafting", problem: "Need to calculate the area and perimeter of a shape or enclosed boundary", solution: "Calculates area and perimeter for selected objects or a picked polygon boundary" },
+  { cmd: "MASSPROP", category: "drafting", problem: "Need to find the centroid, moments of inertia, or area of a region or solid", solution: "Reports mass properties of 2D regions or 3D solids including area and centroid" },
+  { cmd: "LIST", category: "drafting", problem: "Need to see all database properties of a selected object in the command line", solution: "Displays all entity data for selected objects including handles, coordinates, and layer" },
+  { cmd: "DBLIST", category: "drafting", problem: "Need a report of all objects in the entire drawing database", solution: "Lists all objects in the drawing database — use with caution on large drawings" },
+  { cmd: "WHOHAS", category: "drafting", problem: "Need to know who has a DWG file open on the network", solution: "Identifies which user has a specific drawing file open and locked on the network" },
+  { cmd: "STATUS", category: "drafting", problem: "Need a summary of the current drawing settings and mode states", solution: "Displays a status summary of all current drawing modes, limits, and settings" },
+  { cmd: "STATS", category: "drafting", problem: "Need to see rendering statistics after a render operation", solution: "Displays statistics about the last render operation" },
+  { cmd: "TIME", category: "drafting", problem: "Need to know how much time has been spent editing the current drawing", solution: "Displays creation date, last update, and total editing time for the current drawing" },
+  { cmd: "SETVAR", category: "drafting", problem: "A specific system variable needs to be set from the command line", solution: "Sets any system variable to a specified value directly from the command line" },
+  { cmd: "UNDO", category: "drafting", problem: "Last operation needs to be reversed and control over undo history is needed", solution: "Provides undo with options to mark, back, begin/end groups, and control undo depth" },
+  { cmd: "REDRAW", category: "drafting", problem: "Blips or drawing artifacts need to be removed without regenerating", solution: "Redraws the current viewport to clean up display blips — faster than REGEN" },
+  { cmd: "QSAVE", category: "drafting", problem: "Drawing needs to be saved quickly without a dialog", solution: "Saves the drawing to its current file name without opening a dialog — no interruption" },
+  { cmd: "SAVEAS", category: "drafting", problem: "Drawing needs to be saved with a different name, location, or format", solution: "Opens Save As dialog with format options including older DWG versions and DXF" },
+  { cmd: "RECOVER", category: "drafting", problem: "Drawing is corrupted and cannot be opened normally", solution: "Repairs and opens a damaged DWG file — also available from the File menu" },
+  { cmd: "SCRIPTCALL", category: "drafting", problem: "Need to run an AutoCAD script file to automate a sequence of commands", solution: "Executes a SCR script file — useful for batch operations and repetitive workflows" },
+  { cmd: "SCRIPT", category: "drafting", problem: "Need to replay a sequence of commands stored in a text script file", solution: "Runs an ASCII script file that contains a series of AutoCAD commands and responses" },
+  { cmd: "DELAY", category: "drafting", problem: "A pause needs to be inserted into a running script file", solution: "Pauses script execution for a specified number of milliseconds — useful in demos" },
+  { cmd: "RESUME", category: "drafting", problem: "A script was interrupted and needs to continue from where it stopped", solution: "Resumes a script that was interrupted by pressing Backspace or ESC" },
+  { cmd: "SUPERHATCH", category: "drafting", problem: "Need to use images, blocks, or xrefs as a hatch pattern fill", solution: "Creates hatches using external images, blocks, or xrefs as the repeating tile" },
+  { cmd: "RTEXT", category: "drafting", problem: "Text needs to display dynamic content like a diesel expression or file contents", solution: "Creates remote text that reads from a text file or a diesel expression dynamically (Express Tools)" },
+  { cmd: "TCASE", category: "drafting", problem: "Text case needs to be changed to uppercase, lowercase, or title case in batch", solution: "Changes the case of selected text objects without retyping (Express Tools)" },
+  { cmd: "LINETYPE", category: "drafting", problem: "Need to load, modify, or manage linetypes in the drawing", solution: "Opens the Linetype Manager to load, create, and manage linetypes from LIN files" },
+  { cmd: "LTSCALE", category: "drafting", problem: "Linetypes appear as solid lines or the dash pattern is too large or small", solution: "Sets the global linetype scale factor — affects all linetypes in the drawing" },
+  { cmd: "PSLTSCALE", category: "drafting", problem: "Linetypes look different in model space versus paper space viewports", solution: "Controls linetype scaling relative to the viewport scale — set to 1 for consistent appearance" },
+  { cmd: "CELTSCALE", category: "drafting", problem: "Individual objects need a different linetype scale from the global setting", solution: "Sets the linetype scale for new objects relative to the global LTSCALE" },
+  { cmd: "LINEWEIGHT", category: "drafting", problem: "Lineweights are assigned but not visible on screen", solution: "Opens Lineweight Settings and toggles display — lineweights only show with LWT display on" },
+  { cmd: "LWEIGHT", category: "drafting", problem: "Need to set or toggle lineweight display from the command line", solution: "Sets the current lineweight or controls lineweight display visibility" },
+  { cmd: "TRANSPARENCY", category: "drafting", problem: "Objects need to have visual transparency for overlay presentations", solution: "Sets the transparency level for selected objects from 0 (opaque) to 90 (nearly transparent)" },
+  { cmd: "DRAWORDER", category: "drafting", problem: "Objects overlap incorrectly — hatches cover linework or images cover text", solution: "Changes the draw order of objects to control which appears on top during display and plot" },
+  { cmd: "TEXTTOFRONT", category: "drafting", problem: "Text and dimensions are hidden behind hatches or solid fills", solution: "Moves all text, dimensions, or leaders to the front of the draw order (Express Tools)" },
+  { cmd: "HATCHTOBACK", category: "drafting", problem: "Hatches are covering linework and text — need to send them to background", solution: "Sends all hatch objects to the back of the draw order (Express Tools)" },
+  { cmd: "ISOLINES", category: "drafting", problem: "3D solid curved surfaces display with too few or too many tessellation lines", solution: "Sets the number of contour lines displayed on curved 3D solid surfaces" },
+  { cmd: "FACETRES", category: "drafting", problem: "3D solids appear faceted when rendered or exported", solution: "Controls the smoothness of curved surfaces in rendered views and STL exports" },
+  { cmd: "INTERSECT", category: "drafting", problem: "Need to create a solid or region that is the common volume of two overlapping objects", solution: "Creates a new object from the intersecting volume of two or more selected regions or solids" },
+  { cmd: "SUBTRACT", category: "drafting", problem: "Need to cut one shape out of another using Boolean subtraction", solution: "Subtracts one or more regions or solids from a base object" },
+  { cmd: "UNION", category: "drafting", problem: "Multiple regions or solids need to be combined into a single object", solution: "Joins two or more regions or solids into a single unified object" },
+  { cmd: "SECTION", category: "drafting", problem: "Need to create a 2D cross-section cut through a 3D solid", solution: "Creates a 2D region representing a cross-section cut through a 3D solid" },
+  { cmd: "SLICE", category: "drafting", problem: "A 3D solid needs to be cut by a plane into two separate solids", solution: "Cuts a 3D solid with a plane defined by three points, object, or axis" },
+  { cmd: "EXTRUDE", category: "drafting", problem: "A 2D profile needs to be extruded into a 3D solid", solution: "Creates a 3D solid by extruding a 2D profile along a path or by height" },
+  { cmd: "REVOLVE", category: "drafting", problem: "A 2D profile needs to be revolved around an axis to create a 3D solid", solution: "Creates a 3D solid of revolution by rotating a 2D profile around an axis" },
+  { cmd: "SWEEP", category: "drafting", problem: "A 2D profile needs to be swept along a path to create a complex 3D solid", solution: "Creates a 3D solid by sweeping a 2D profile along a 2D or 3D path" },
+  { cmd: "LOFT", category: "drafting", problem: "Multiple 2D cross-sections need to be connected to create a smooth 3D solid", solution: "Creates a 3D solid by lofting through two or more 2D cross-section profiles" },
+  { cmd: "CONVTOSURFACE", category: "drafting", problem: "2D objects need to be converted to 3D surfaces for surface modeling", solution: "Converts 2D objects such as lines, arcs, and polylines into 3D surface objects" },
+  { cmd: "CONVTOSOLID", category: "drafting", problem: "Meshes or surfaces need to be converted to solid objects", solution: "Converts mesh objects and watertight surfaces into 3D solid objects" },
+  { cmd: "MESHSMOOTH", category: "drafting", problem: "A 3D solid or surface needs to be converted to a smoothable mesh", solution: "Converts 3D solids and surfaces to mesh objects that can be smoothed and sculpted" },
+  { cmd: "PRESSPULL", category: "drafting", problem: "A bounded area needs to be pushed or pulled to create 3D geometry quickly", solution: "Creates 3D geometry by pressing or pulling a bounded 2D area — intuitive direct modeling" },
+  { cmd: "IMPRINT", category: "drafting", problem: "2D geometry needs to be imprinted onto a 3D solid face for further editing", solution: "Imprints edges from 2D objects onto the face of a 3D solid for extrusion or deletion" },
+  { cmd: "OFFSETEDGE", category: "drafting", problem: "Need to create an offset curve on the face of a 3D solid", solution: "Creates an offset curve on a planar face of a 3D solid at a specified distance" },
+  { cmd: "SOLIDEDIT", category: "drafting", problem: "Faces, edges, or the body of a 3D solid need to be individually edited", solution: "Provides sub-object editing of solid faces, edges, and bodies" },
+  { cmd: "INTERFERE", category: "drafting", problem: "Need to check if two 3D solids overlap or interfere with each other", solution: "Checks for interference between 3D solids and optionally creates interference solids" },
+  { cmd: "STLOUT", category: "drafting", problem: "A 3D solid needs to be exported to STL format for 3D printing", solution: "Exports selected 3D solids to STL format for 3D printing or CNC machining" },
+  { cmd: "ACISOUT", category: "drafting", problem: "A 3D solid needs to be exported in SAT format for other CAD software", solution: "Exports 3D solids to SAT (ACIS) format compatible with other 3D CAD applications" },
+  { cmd: "ACISIN", category: "drafting", problem: "A SAT file from another CAD application needs to be imported", solution: "Imports ACIS SAT format 3D solid files into the current drawing" },
+  { cmd: "ADDSURFACEBREAKLINE", category: "design", problem: "Surface triangulation crosses a ridge, channel, or road edge incorrectly", solution: "Adds breaklines to a TIN surface to force correct triangulation along terrain features" },
+  { cmd: "EDITSURFACEBREAKLINE", category: "design", problem: "An existing surface breakline needs to be modified or deleted", solution: "Opens the breakline editor to modify or remove existing breaklines from a surface" },
+  { cmd: "ADDSURFACEBOUNDARY", category: "design", problem: "Surface extends beyond the project limits or into unwanted areas", solution: "Adds an outer, inner, show, or hide boundary to limit the extents of a TIN surface" },
+  { cmd: "EDITSURFACE", category: "design", problem: "Surface data needs to be modified — add points, delete triangles, or swap edges", solution: "Opens the Surface Editor for direct manipulation of TIN triangles, points, and edges" },
+  { cmd: "SURFACEPROPERTIES", category: "design", problem: "Surface style, rendering, or analysis settings need to be changed", solution: "Opens Surface Properties to modify definition, analysis, statistics, and style settings" },
+  { cmd: "ADDSURFACECONTOURDATA", category: "design", problem: "Existing contour lines in the drawing need to be used to build a surface", solution: "Adds contour polylines from the drawing as surface definition data" },
+  { cmd: "ADDSURFACEDRAWINGOBJECTS", category: "design", problem: "3D objects in the drawing need to contribute to the surface definition", solution: "Adds feature lines, 3D polylines, or other drawing objects to the surface definition" },
+  { cmd: "DELETESURFACEPOINTS", category: "design", problem: "Specific surface points are causing incorrect triangulation and need removal", solution: "Deletes selected data points from the surface definition to fix localized errors" },
+  { cmd: "SWAPSURFACEEDGE", category: "design", problem: "A specific triangle edge in the TIN surface is triangulating incorrectly", solution: "Swaps the shared edge between two adjacent triangles to correct local triangulation" },
+  { cmd: "DELETESURFACETRIANGLES", category: "design", problem: "Specific triangles in the surface are incorrect and need to be removed", solution: "Deletes selected triangles from the TIN surface to create holes or remove bad data" },
+  { cmd: "ADDSURFACEPOINTS", category: "design", problem: "Additional elevation points need to be added to an existing surface", solution: "Adds new XYZ points directly to the surface definition to improve accuracy" },
+  { cmd: "PASTESUFACE", category: "design", problem: "Data from one surface needs to be merged into another", solution: "Pastes the contents of one surface into another surface as a paste operation" },
+  { cmd: "SURFACEELEVATIONANALYSIS", category: "design", problem: "Surface needs color-coded elevation banding for visual analysis", solution: "Creates an elevation analysis on the surface using color bands for height ranges" },
+  { cmd: "SURFACESLOPEANALYSIS", category: "design", problem: "Surface slope distribution needs to be visualized for grading or drainage analysis", solution: "Creates a slope analysis on the surface using color bands for gradient ranges" },
+  { cmd: "SURFACESLOPEARROWANALYSIS", category: "design", problem: "Surface drainage direction needs to be visualized with slope arrows", solution: "Creates a slope arrow analysis showing flow direction across the surface" },
+  { cmd: "SURFACEWATERDROPANALYSIS", category: "design", problem: "Need to trace the flow path of water from a point on the surface", solution: "Traces a water drop path from a selected point following the steepest descent" },
+  { cmd: "ADDSURFACECLIP", category: "design", problem: "A section of the surface is not needed and should be clipped out", solution: "Clips the surface to remove areas outside or inside a specified boundary" },
+  { cmd: "CREATESUFACE", category: "design", problem: "A new terrain surface needs to be created from scratch in the drawing", solution: "Creates a new empty TIN or Grid surface object ready for data to be added" },
+  { cmd: "SURFACESMOOTHING", category: "design", problem: "Surface has too many triangles or sharp peaks and needs smoothing", solution: "Applies Natural Neighbor or Kriging smoothing to reduce surface roughness" },
+  { cmd: "REBUILDAUTOMATICSURFACES", category: "design", problem: "Automatic surfaces are out of date after data changes and need updating", solution: "Forces a rebuild of all surfaces set to rebuild automatically" },
+  { cmd: "MINIMUMTRIANGLELENGTH", category: "design", problem: "Surface has very short triangles causing spiky artifacts near breaklines", solution: "Sets a minimum triangle edge length filter to eliminate spike artifacts" },
+  { cmd: "EDITALIGNMENTGEOMETRY", category: "design", problem: "Horizontal alignment tangents, curves, or spirals need to be modified", solution: "Opens the Alignment Layout Editor to modify alignment geometry components" },
+  { cmd: "EDITALIGNMENTDIRECTION", category: "design", problem: "Alignment stationing runs in the wrong direction and needs to be reversed", solution: "Reverses the direction of an existing alignment and updates all stationing references" },
+  { cmd: "ALIGNMENTPROPERTIES", category: "design", problem: "Alignment name, style, station control, or design criteria need to be changed", solution: "Opens Alignment Properties for modifying all alignment settings and design standards" },
+  { cmd: "CREATEALIGNMENTFROMPOLYLINE", category: "design", problem: "An existing polyline in the drawing needs to be converted to an alignment", solution: "Creates an alignment from a selected polyline without modifying the original geometry" },
+  { cmd: "CREATEALIGNMENTFROMNETWORK", category: "design", problem: "A pipe network needs a matching horizontal alignment for profile generation", solution: "Creates an alignment following the layout of a pipe network for profiling purposes" },
+  { cmd: "EDITSTATIONEQUATION", category: "design", problem: "Station equations need to be added or modified at chainage changes", solution: "Edits station equations to account for added or deleted geometry in the alignment" },
+  { cmd: "ADDDESIGNCRITERIA", category: "design", problem: "Alignment or profile needs to be checked against design speed standards", solution: "Adds a design criteria file to validate minimum radius, stopping sight distance, and K-values" },
+  { cmd: "DESIGNCHECKSALIGNMENTS", category: "design", problem: "Need to run design standard checks on all alignments in the drawing", solution: "Runs all configured design checks on selected alignments and reports violations" },
+  { cmd: "ALIGNMENTOFFSET", category: "design", problem: "Need to create an offset alignment parallel to an existing alignment", solution: "Creates a new alignment at a fixed offset distance from an existing alignment" },
+  { cmd: "ALIGNMENTWIDENING", category: "design", problem: "Offset alignment needs variable width — wider in curves, narrower on tangents", solution: "Creates an offset alignment with widening rules applied at curves for road design" },
+  { cmd: "CREATEPROFILEFRMSURFACE", category: "design", problem: "A surface profile along an alignment needs to be extracted automatically", solution: "Samples the surface elevation along an alignment and creates an existing ground profile" },
+  { cmd: "EDITPROFILEGEOMETRY", category: "design", problem: "Profile PVIs, tangents, or vertical curves need to be graphically edited", solution: "Opens the Profile Layout Editor to modify the designed profile geometry" },
+  { cmd: "PROFILEPROPERTIES", category: "design", problem: "Profile name, style, layer, or design criteria need to be changed", solution: "Opens Profile Properties for modifying settings of the selected profile object" },
+  { cmd: "DRAWINPROFVIEW", category: "design", problem: "New profile geometry needs to be drawn directly in a profile view", solution: "Activates drawing mode within a profile view to create profile geometry interactively" },
+  { cmd: "PROFILEVIEWPROPERTIES", category: "design", problem: "Profile view height, datum elevation, grid, or band settings need adjustment", solution: "Opens Profile View Properties to configure display and grid settings" },
+  { cmd: "CREATEPROFILEVIEW", category: "design", problem: "A profile view needs to be created for an alignment", solution: "Creates a new profile view for a selected alignment with style and band configuration" },
+  { cmd: "SPLITPROFILEVIEW", category: "design", problem: "A long profile view needs to be split into multiple shorter views", solution: "Splits an existing profile view into two or more separate profile view objects" },
+  { cmd: "PROJECTOBJECTSTOPROFILEVIEW", category: "design", problem: "3D objects need to be projected onto a profile view as crossing data", solution: "Projects pipe crossings, feature lines, or 3D objects onto a profile view for visualization" },
+  { cmd: "UPDATEPROFILEVIEW", category: "design", problem: "Profile view is out of date after alignment or surface changes", solution: "Forces an update of the selected profile view to reflect current data" },
+  { cmd: "STAGGEREDLABELS", category: "design", problem: "Profile labels are overlapping and need to be staggered for readability", solution: "Staggers profile station labels to avoid overlap at closely spaced label positions" },
+  { cmd: "CORRIDORPROPERTIES", category: "design", problem: "Corridor regions, baselines, targets, or frequencies need to be modified", solution: "Opens Corridor Properties to edit all corridor definition settings" },
+  { cmd: "REBUILDCORRIDOR", category: "design", problem: "Corridor is out of date after changes to alignment, profile, or assembly", solution: "Forces a complete rebuild of the corridor model to reflect all current changes" },
+  { cmd: "CORRIDORSECTIONVIEW", category: "design", problem: "Need to inspect the corridor cross-section at a specific station", solution: "Opens a cross-section view at a selected station within the corridor" },
+  { cmd: "EDITCORRIDORSECTION", category: "design", problem: "A specific corridor cross-section needs manual geometry correction", solution: "Opens the corridor section editor for interactive editing at a specific station" },
+  { cmd: "ADDCORRIDORBASELINE", category: "design", problem: "A corridor needs an additional baseline for an intersection or interchange", solution: "Adds a new baseline to an existing corridor using an alignment and profile" },
+  { cmd: "ADDCORRIDORREGION", category: "design", problem: "A corridor needs a different assembly applied over a specific station range", solution: "Adds a new region to a corridor baseline with a different assembly assignment" },
+  { cmd: "CORRIDORTOSURFACE", category: "design", problem: "A surface needs to be extracted from corridor data for grading or analysis", solution: "Creates a surface from selected corridor link codes such as Top, Datum, or subgrades" },
+  { cmd: "EXTRACTCORRIDORFEATURELINES", category: "design", problem: "Feature lines need to be extracted from corridor codes for grading or design", solution: "Extracts feature lines from corridor code points for use in grading or surface creation" },
+  { cmd: "EXTRACTCORRIDORSOLIDS", category: "design", problem: "3D solid geometry needs to be extracted from the corridor for visualization", solution: "Extracts 3D solid objects representing the corridor volume for rendering or BIM" },
+  { cmd: "CREATEQTOSECTION", category: "design", problem: "Quantity takeoff sections need to be defined for volume calculations", solution: "Creates sections for quantity takeoff calculations along the corridor" },
+  { cmd: "COMPUTEMATERIALS", category: "design", problem: "Cut and fill volumes need to be calculated along a corridor", solution: "Computes material volumes between existing and finished surfaces using sample sections" },
+  { cmd: "VOLUMESINBALANCED", category: "design", problem: "Need to find the balance point where cut volume equals fill volume", solution: "Calculates the balance point along the alignment where earthwork is balanced" },
+  { cmd: "MASSHAUL", category: "design", problem: "Earthwork haul distances and directions need to be optimized", solution: "Creates a mass haul diagram showing optimal haul directions and distances" },
+  { cmd: "PIPEPROPERTIES", category: "design", problem: "Individual pipe properties — diameter, material, slopes, or inverts need editing", solution: "Opens Pipe Properties to edit all properties of a selected pipe in a network" },
+  { cmd: "STRUCTUREPROPERTIES", category: "design", problem: "Structure properties — sump depth, rim elevation, or style need editing", solution: "Opens Structure Properties to modify all settings for a selected network structure" },
+  { cmd: "EDITPIPENETWORKLAYOUT", category: "design", problem: "Pipe network layout needs interactive editing in plan view", solution: "Opens the Pipe Network Layout Tools toolbar for interactive pipe network editing" },
+  { cmd: "DRAWPIPES", category: "design", problem: "New pipes need to be added to an existing pipe network in plan view", solution: "Activates pipe drawing mode within the Pipe Network Layout Tools" },
+  { cmd: "DRAWSTRUCTURES", category: "design", problem: "New structures need to be added to an existing pipe network", solution: "Activates structure placement mode within the Pipe Network Layout Tools" },
+  { cmd: "SPLITPIPENETWORK", category: "design", problem: "A pipe network needs to be divided into two separate networks", solution: "Splits an existing pipe network at a selected pipe or structure into two networks" },
+  { cmd: "MERGEPIPENETWORKS", category: "design", problem: "Two separate pipe networks need to be combined into one", solution: "Merges two pipe networks into a single unified pipe network object" },
+  { cmd: "RENAMEPIPENETWORKPARTS", category: "design", problem: "Pipe and structure names in a network need to be systematically renamed", solution: "Renames pipes and structures in a network using a naming template" },
+  { cmd: "PIPETOPCOVERANALYSIS", category: "design", problem: "Need to verify minimum cover depth over pipes meets design requirements", solution: "Checks cover depth for all pipes in a network against a reference surface" },
+  { cmd: "CONNECTPIPENETWORKPARTS", category: "design", problem: "Disconnected pipes and structures in a network need to be reconnected", solution: "Connects pipes and structures that are within a tolerance but not formally connected" },
+  { cmd: "DISCONNECTPIPENETWORKPARTS", category: "design", problem: "A pipe or structure connection needs to be broken for redesign", solution: "Disconnects selected pipes or structures from the pipe network connections" },
+  { cmd: "SWAPPART", category: "design", problem: "A pipe or structure size needs to be changed to a different part from the catalog", solution: "Replaces a selected pipe or structure with a different part from the Parts List" },
+  { cmd: "INTERFERENCECHECK", category: "design", problem: "Pipe networks need to be checked for 3D clashes with each other or other objects", solution: "Runs a 3D interference check between two pipe networks to find conflicts" },
+  { cmd: "NETWORKLAYOUTPROFILE", category: "design", problem: "A profile view for a pipe network along its alignment needs to be created", solution: "Draws pipe network parts in a profile view associated with an alignment" },
+  { cmd: "CREATEFEATURELINE", category: "design", problem: "A feature line needs to be created from scratch, polyline, or alignment", solution: "Creates a feature line from selected objects or drawn from scratch with elevation control" },
+  { cmd: "EDITFEATURELINEELEVATIONS", category: "design", problem: "Elevations along a feature line need to be modified at specific points", solution: "Opens the Feature Line Elevation Editor to modify point elevations and grades" },
+  { cmd: "RAISELOWERFEATURELINE", category: "design", problem: "All elevations on a feature line need to be shifted up or down uniformly", solution: "Raises or lowers all elevations along a feature line by a specified amount" },
+  { cmd: "GRADEFEATURELINE", category: "design", problem: "A feature line needs to be assigned a consistent slope between two points", solution: "Sets a uniform grade between two selected vertices on a feature line" },
+  { cmd: "SETGRADEBETWEENPOINTS", category: "design", problem: "Grade between two specific points on a feature line needs to be defined", solution: "Interactively sets the slope between two selected elevation points on a feature line" },
+  { cmd: "INSERTPIONFEATURELINE", category: "design", problem: "A new PI point needs to be added to a feature line at a specific location", solution: "Inserts a new PI point into an existing feature line with elevation interpolation" },
+  { cmd: "DELETEPIFEATURELINE", category: "design", problem: "A PI point on a feature line needs to be removed", solution: "Deletes selected PI points from a feature line and smooths the resulting geometry" },
+  { cmd: "CREATEGRADINGROUP", category: "design", problem: "A grading group needs to be created for organizing grading objects", solution: "Creates a new grading group to organize and manage related grading objects" },
+  { cmd: "CREATEGRADINOBJECT", category: "design", problem: "A grading needs to be applied from a feature line to a target surface", solution: "Creates a grading object using a feature line as the baseline and defined slopes to a target" },
+  { cmd: "GRADINGPROPERTIES", category: "design", problem: "Grading target, slope, or surface settings need to be modified", solution: "Opens Grading Properties to edit all parameters of the selected grading object" },
+  { cmd: "GRADINVOLUME", category: "design", problem: "Volume of a grading object needs to be calculated", solution: "Reports the cut and fill volume enclosed by a grading object relative to a reference surface" },
+  { cmd: "CREATEPOINTGROUP", category: "design", problem: "Survey points need to be organized into groups for display and control", solution: "Creates a point group based on name, number range, layer, or description criteria" },
+  { cmd: "EDITPOINTGROUP", category: "design", problem: "An existing point group needs its criteria or properties updated", solution: "Edits the membership criteria and display properties of a selected point group" },
+  { cmd: "IMPORTSURVEYDATA", category: "design", problem: "Survey data in LandXML, ASCII, or other formats needs to be imported", solution: "Imports survey measurements including traverse, observations, and figures" },
+  { cmd: "EDITSURVEYDATABASE", category: "design", problem: "Survey data in the database needs to be reviewed or corrected", solution: "Opens the survey database editor for reviewing and modifying raw survey observations" },
+  { cmd: "CREATEPOINTFROMOBJECT", category: "design", problem: "Points need to be created at specific object geometry locations", solution: "Creates COGO points at endpoints, midpoints, intersections, or other geometry positions" },
+  { cmd: "TRANSLATEPOINTS", category: "design", problem: "Survey points need to be transformed to a different coordinate system", solution: "Applies a coordinate transformation to selected points by rotation, scale, and translation" },
+  { cmd: "IMPORTPOINTS", category: "design", problem: "Points from an ASCII file need to be imported into the drawing", solution: "Imports point data from a delimited text file using a specified point format" },
+  { cmd: "EXPORTPOINTS", category: "design", problem: "COGO points in the drawing need to be exported to an ASCII file", solution: "Exports selected points to a text file using a configured point file format" },
+  { cmd: "POINTGROUPPROPERTIES", category: "design", problem: "Point group display style, overrides, or membership needs modification", solution: "Opens Point Group Properties to edit all settings for the selected point group" },
+  { cmd: "UPDATEPOINTGROUP", category: "design", problem: "Point groups are not showing the correct members after data changes", solution: "Forces all point groups to recalculate their membership based on current data" },
+  { cmd: "ADDLABELS", category: "design", problem: "Civil 3D objects need labels added — stations, elevations, slopes, or offsets", solution: "Opens the Add Labels dialog to place any label type on Civil 3D objects" },
+  { cmd: "EDITLABELSTYLE", category: "design", problem: "The style of existing Civil 3D labels needs to be modified", solution: "Opens the Label Style editor for the selected label to modify text, anchors, and data" },
+  { cmd: "EDITLABELS", category: "design", problem: "Multiple labels need their properties changed in one operation", solution: "Opens the Edit Labels dialog for batch modification of label properties" },
+  { cmd: "RENEWLABELS", category: "design", problem: "Labels have lost their reference and display question marks or wrong values", solution: "Reconnects labels to their referenced objects and updates the displayed values" },
+  { cmd: "FLIPLABELS", category: "design", problem: "Labels are on the wrong side of the object and need to be mirrored", solution: "Flips selected labels to the opposite side of their referenced alignment or object" },
+  { cmd: "RESETLABELS", category: "design", problem: "Labels have been manually dragged and need to return to their default position", solution: "Resets all selected labels to their defined anchor position and removes drag offsets" },
+  { cmd: "EDITPIPENETWORKLABELS", category: "design", problem: "Pipe network labels need to be added or their styles need changing", solution: "Adds or modifies labels for pipes and structures in a pipe network" },
+  { cmd: "LABELCOMPOSERSCHEMA", category: "design", problem: "Need to create a new Civil 3D label style from scratch", solution: "Opens the Label Style Composer for creating or editing Civil 3D object label styles" },
+  { cmd: "SETTINGLABELSTYLES", category: "design", problem: "Default label styles for Civil 3D objects need to be set for new objects", solution: "Opens the Edit Label Style Defaults to configure default styles for all object types" },
+  { cmd: "ADDLEADER", category: "design", problem: "A leader needs to be attached to an existing Civil 3D label", solution: "Adds a leader line to a selected Civil 3D object label" },
+  { cmd: "REMOVELEADER", category: "design", problem: "An unwanted leader on a Civil 3D label needs to be removed", solution: "Removes a leader from a selected Civil 3D label while keeping the label" },
+  { cmd: "NEWSECTION", category: "design", problem: "A new data shortcut needs to be created for sharing Civil 3D objects", solution: "Creates data shortcuts for surfaces, alignments, profiles, corridors, or networks" },
+  { cmd: "CREATEDATASHORTCUTS", category: "design", problem: "Civil 3D objects need to be shared with other team members via data shortcuts", solution: "Creates data shortcuts in the project folder for selected Civil 3D objects" },
+  { cmd: "EDITDATASHORTCUTS", category: "design", problem: "Existing data shortcuts need to be updated or renamed", solution: "Opens the data shortcut editor for managing existing shortcut references" },
+  { cmd: "SYNCHRONIZEDATASHORTCUTS", category: "design", problem: "Data shortcut references are out of date and need refreshing", solution: "Synchronizes all data shortcut references to reflect changes in source files" },
+  { cmd: "BROKENDATASHORTCUTREPORT", category: "design", problem: "Data shortcuts in the drawing are broken and the source cannot be found", solution: "Generates a report listing all broken data shortcut references and their status" },
+  { cmd: "NEWPROJECTFOLDER", category: "design", problem: "A new Civil 3D project folder structure needs to be created", solution: "Creates a new project folder with the standard Civil 3D directory structure" },
+  { cmd: "CIVILWORKSPACESETUP", category: "design", problem: "The Civil 3D workspace needs to be configured for a new project", solution: "Sets up drawing templates, styles, and settings for a new Civil 3D project" },
+  { cmd: "TRANSFERPROJECTSTANDARDARDS", category: "design", problem: "Project styles and settings need to be transferred to another drawing", solution: "Transfers Civil 3D styles, settings, and standards between drawings" },
+  { cmd: "DAYLIGHTINGSURFACE", category: "design", problem: "Need to find where a design surface intersects an existing terrain surface", solution: "Creates daylight lines where the corridor surface meets the existing ground surface" },
+  { cmd: "SITEGRADING", category: "design", problem: "A site grading design needs to be created from scratch", solution: "Opens the site grading workflow for designing graded pads and transition slopes" },
+  { cmd: "CREATEVIEWFRAMES", category: "design", problem: "View frames need to be set up for plan and profile sheet production", solution: "Creates view frames along an alignment for automated sheet creation" },
+  { cmd: "CREATESHEETS", category: "design", problem: "Plan and profile sheets need to be generated from view frames", solution: "Creates sheet drawings from configured view frames with plan and profile layouts" },
+  { cmd: "MATCHLINESSETUP", category: "design", problem: "Match lines need to be configured for plan sheet production", solution: "Sets up match lines at view frame boundaries for plan production sheets" },
+  { cmd: "EDITVIEWFRAME", category: "design", problem: "View frame properties or boundaries need adjustment", solution: "Edits the position, rotation, or sheet association of an existing view frame" },
+  { cmd: "DELETEVIEWFRAME", category: "design", problem: "A view frame needs to be removed from the view frame group", solution: "Deletes a selected view frame and optionally its associated sheet drawing" },
+  { cmd: "QTOCOMPUTEMATERIALS", category: "design", problem: "Earthwork and material quantities need to be computed along the corridor", solution: "Computes earthwork quantities by comparing existing and design surfaces at sections" },
+  { cmd: "QTOREPORTMATERIALS", category: "design", problem: "Computed earthwork quantities need to be reported in a table or spreadsheet", solution: "Generates a quantity report from computed earthwork data in table or HTML format" },
+  { cmd: "RESERVOIRVOLUMECALCULATION", category: "design", problem: "Volume of a reservoir or detention pond needs to be calculated", solution: "Calculates the volume of a surface depression at different water surface elevations" },
+  { cmd: "PROFILEGRADECHECKS", category: "design", problem: "Profile grades need to be verified against maximum and minimum design values", solution: "Runs grade checks on a profile and reports stations that exceed design standards" },
+  { cmd: "BANDSETTINGS", category: "design", problem: "Data bands at the bottom of a profile view need to be added or modified", solution: "Configures data band sets for displaying stations, elevations, and cut/fill in profile views" },
+  { cmd: "ADDPROFILEBANDS", category: "design", problem: "Existing profile views need additional data bands attached", solution: "Adds station, elevation, or custom data bands to the bottom of a profile view" },
+  { cmd: "MAPIMPORT", category: "design", problem: "GIS data in SHP, GML, DEM, or LandXML format needs to be imported", solution: "Opens Map Import to bring in GIS and terrain data with coordinate system awareness" },
+  { cmd: "MAPEXPORT", category: "design", problem: "Drawing objects need to be exported to a GIS format such as SHP or GML", solution: "Exports selected objects to external GIS formats with attribute data" },
+  { cmd: "ADESETCRDSYS", category: "design", problem: "The drawing coordinate system is not set and georeferencing is incorrect", solution: "Assigns a coordinate system to the drawing for correct georeferencing" },
+  { cmd: "MAPASSIGN", category: "design", problem: "Objects need GIS attribute data assigned for export or analysis", solution: "Assigns object data table values to selected map objects for GIS workflows" },
+  { cmd: "MAPQUERY", category: "design", problem: "Objects need to be queried and loaded from a connected GIS database", solution: "Runs a query to load objects from an attached GIS database or SHP file" },
+  { cmd: "CONNECTTODATASTORE", category: "design", problem: "An external GIS data source or Oracle database needs to be connected", solution: "Establishes a connection to an external GIS or database data source" },
+  { cmd: "MAPCLEAN", category: "design", problem: "Imported GIS linework has topology errors — undershoots, overshoots, or gaps", solution: "Runs automated map cleaning to fix topology errors in imported GIS data" },
+  { cmd: "MAPTOPOLOGY", category: "design", problem: "Polygon topology needs to be created or checked for GIS analysis", solution: "Creates or analyzes topology for polygon and line features in the drawing" },
+  { cmd: "DRAPE", category: "design", problem: "2D linework needs to be projected onto a 3D surface to acquire elevations", solution: "Projects 2D objects onto a 3D surface and assigns surface elevation values to them" },
+  { cmd: "PROJECTOBJECTS", category: "design", problem: "Objects need to be projected to a surface to get their 3D coordinates", solution: "Projects selected drawing objects to a Civil 3D surface to assign elevation data" },
+  { cmd: "SURFACEWATERSHEDS", category: "design", problem: "Watersheds and drainage basins for a surface need to be delineated", solution: "Calculates and creates watershed boundary objects from a TIN surface" },
+  { cmd: "CATCHMENTAREA", category: "design", problem: "Catchment area needs to be defined and calculated for stormwater analysis", solution: "Creates and calculates the area of a drainage catchment for hydrology calculations" },
+  { cmd: "SLOPESHADING", category: "design", problem: "Surface slope ranges need to be color-coded and shaded for visual reporting", solution: "Creates a slope shading display on the surface for planning and reporting purposes" },
+  { cmd: "FLOODFILLSURFACE", category: "design", problem: "Need to find the extent of flooding at a given water elevation on a surface", solution: "Fills a surface depression to a specified elevation and shows the flood extent area" },
+  { cmd: "ELEVATIONTOSURFACE", category: "design", problem: "Object elevations need to be assigned based on a surface", solution: "Assigns elevation values from a reference surface to selected 2D objects" },
+  { cmd: "ASSIGNELEVATIONTOSURFACE", category: "design", problem: "Points or objects need elevations interpolated from the nearest surface", solution: "Interpolates and assigns elevations from a surface to selected objects or points" },
+  { cmd: "CREATEASSEMBLY", category: "design", problem: "A new road cross-section template needs to be created", solution: "Creates a new assembly object to hold road cross-section subassembly components" },
+  { cmd: "EDITASSEMBLYPROPERTIES", category: "design", problem: "Assembly name, layer, or code set style needs to be changed", solution: "Opens Assembly Properties for modifying the settings of the selected assembly" },
+  { cmd: "ADDSUBASSEMBLY", category: "design", problem: "Lanes, curbs, sidewalks, or ditches need to be added to an assembly", solution: "Opens the Tool Palette to select and attach subassembly components to an assembly" },
+  { cmd: "SUBASSEMBLYPROPERTIES", category: "design", problem: "Subassembly parameters such as lane width or slope need to be changed", solution: "Opens the properties of a selected subassembly to modify its design parameters" },
+  { cmd: "MIRRORSUBASSEMBLY", category: "design", problem: "A subassembly on one side of the assembly needs to be mirrored to the other", solution: "Mirrors a selected subassembly to the opposite side of the assembly baseline" },
+  { cmd: "REBUILDASSSEMBLIES", category: "design", problem: "Assembly geometry is out of date after subassembly parameter changes", solution: "Forces all assemblies in the drawing to rebuild their geometry" },
+  { cmd: "CREATESUBASSEMBLYFROMCORRIDOR", category: "design", problem: "Existing corridor section geometry needs to be saved as a reusable subassembly", solution: "Creates a custom subassembly definition from selected corridor section geometry" },
+  { cmd: "CREATEPARCELBYSUBDIVISION", category: "design", problem: "A parcel needs to be subdivided into smaller parcels automatically", solution: "Subdivides a parcel into multiple lots using defined size, frontage, and layout rules" },
+  { cmd: "EDITPARCELLINES", category: "design", problem: "Parcel boundaries need to be adjusted by moving lines or changing geometry", solution: "Opens the parcel layout editor for modifying parcel boundary geometry" },
+  { cmd: "RESIZELOSEPARCEL", category: "design", problem: "A parcel needs to be resized to meet a specific area requirement", solution: "Adjusts a parcel boundary to achieve a target area while maintaining frontage constraints" },
+  { cmd: "PARCELREPORT", category: "design", problem: "Parcel data including areas, perimeters, and coordinates needs to be exported", solution: "Generates a tabular report of parcel properties for legal descriptions or submittals" },
+  { cmd: "CREATEALIGNMENTFROMPARCEL", category: "design", problem: "A parcel boundary segment needs to be converted to an alignment", solution: "Creates an alignment from a selected parcel segment for road or lot design" },
+  { cmd: "TRAVERSECLOSURE", category: "design", problem: "A traverse survey needs to be checked and adjusted for closure", solution: "Runs closure calculations on a traverse survey and applies adjustment if within tolerance" },
+  { cmd: "LEASTSQUARES", category: "design", problem: "Survey measurements need to be adjusted using least squares for best fit", solution: "Runs a least squares adjustment on survey network observations" },
+  { cmd: "FIGUREPREFIX", category: "design", problem: "Survey figure prefixes need to be configured for correct linework generation", solution: "Configures the figure prefix database for controlling survey figure creation" },
+  { cmd: "CREATEPOINTS", category: "design", problem: "COGO points need to be created using manual entry or geometric methods", solution: "Creates COGO points using various methods: manual, from alignment, intersection, or offset" },
+  { cmd: "POINTSETTINGS", category: "design", problem: "Point display, numbering, or description key settings need adjustment", solution: "Opens the Point Settings dialog to configure default point behavior and display" },
+  { cmd: "DESCRIPTIONKEYSETS", category: "design", problem: "Description keys need to be created or edited for automatic point symbolizing", solution: "Opens the description key editor to configure automatic point symbolizing and layering" },
+  { cmd: "POINTFILEFORMATS", category: "design", problem: "Point file import/export formats need to be created or modified", solution: "Opens the point file format editor to define custom ASCII point import/export formats" },
+  { cmd: "EDITPOINTS", category: "design", problem: "COGO point coordinates, elevations, or descriptions need to be edited", solution: "Opens the Point Editor for tabular editing of point number, northing, easting, elevation, and description" },
+  { cmd: "MOVEPOINTS", category: "design", problem: "COGO points need to be relocated to new coordinates", solution: "Moves selected COGO points to new positions by specifying new coordinates or by picking" },
+  { cmd: "ROTATEPOINTS", category: "design", problem: "COGO points need to be rotated around a base point", solution: "Rotates selected COGO points around a specified base point by a defined angle" },
+  { cmd: "SCALEPOINTS", category: "design", problem: "COGO points need to be scaled relative to a base point", solution: "Scales selected COGO points relative to a specified base point by a defined factor" },
+  { cmd: "TOOLSPACECIVIL", category: "design", problem: "Civil 3D Toolspace palette is missing or closed", solution: "Reopens the Toolspace palette showing Prospector, Settings, Survey, and Toolbox tabs" },
+  { cmd: "CIVILPROSPECOR", category: "design", problem: "Need to navigate to a specific Civil 3D object in the Prospector tree", solution: "Opens the Prospector tab of Toolspace for navigating and managing Civil 3D objects" },
+  { cmd: "CIVILSETTINGS", category: "design", problem: "Civil 3D drawing settings, ambient settings, or styles need to be configured", solution: "Opens the Settings tab of Toolspace for managing styles, settings, and standards" },
+  { cmd: "EDITDRAWINGSETTINGS", category: "design", problem: "Drawing units, coordinate system, or ambient settings need modification", solution: "Opens the Drawing Settings dialog to configure Civil 3D drawing-level settings" },
+  { cmd: "EDITMATCHEDCOORDINATES", category: "design", problem: "Drawing coordinate system needs to be changed or checked", solution: "Opens coordinate system settings to verify or change the assigned coordinate system" },
+  { cmd: "OBJECTLAYERSETTINGS", category: "design", problem: "Layer assignments for Civil 3D object components need to be standardized", solution: "Opens the Object Layer Settings to configure layer naming for Civil 3D objects" },
+  { cmd: "FEATURELINESETTINGS", category: "design", problem: "Default feature line settings need to be configured", solution: "Opens the Feature Line Settings to configure default behavior for feature line creation" },
+  { cmd: "PIPENETWORKSETTINGS", category: "design", problem: "Default pipe network settings — naming templates, styles, or rules need setup", solution: "Opens Pipe Network Settings to configure defaults for new pipe network creation" },
+  { cmd: "PRESSUREPIPELINESETTINGS", category: "design", problem: "Pressure pipe network default settings need to be configured", solution: "Opens Pressure Pipe Settings to configure defaults for pressure network design" },
+  { cmd: "POINTSTYLESETTINGS", category: "design", problem: "Point styles used for COGO point display need to be created or modified", solution: "Opens the point style editor to create and modify point symbol and label styles" },
+  { cmd: "SURFACESTYLESETTINGS", category: "design", problem: "Surface display styles for contours, triangles, or analysis need modification", solution: "Opens Surface Style editor to configure how surfaces are displayed in plan and 3D" },
+  { cmd: "ALIGNMENTSTYLESETTINGS", category: "design", problem: "Alignment line, curve, and spiral display styles need to be configured", solution: "Opens Alignment Style editor to control the display of alignment geometry components" },
+  { cmd: "PROFILESTYLESETTINGS", category: "design", problem: "Profile line style and display need to be modified", solution: "Opens Profile Style editor to configure the display of profile lines in profile views" },
+  { cmd: "CORRIDORSTYLE", category: "design", problem: "Corridor display including link and point codes need style changes", solution: "Opens Corridor Style editor to configure the display of corridor components" },
+  { cmd: "SECTIONVIEWSTYLE", category: "design", problem: "Section view grid, title, and display style need to be configured", solution: "Opens Section View Style editor for configuring cross-section view appearance" },
+  { cmd: "PROFILEVIEWSTYLE", category: "design", problem: "Profile view grid lines, title, borders, or datums need style modification", solution: "Opens Profile View Style editor to configure the display of profile view objects" },
+  { cmd: "BANDSTYLE", category: "design", problem: "Profile or section view band display needs to be modified", solution: "Opens the Band Style editor to configure data displayed in profile or section view bands" },
+  { cmd: "VIEWFRAMEGROUP", category: "design", problem: "View frame group settings need to be modified after creation", solution: "Opens View Frame Group properties to edit alignment reference and sheet settings" },
+  { cmd: "INTERSECTIONWIZARD", category: "design", problem: "A road intersection with curb returns and offset geometry needs to be modeled", solution: "Launches the Intersection Creation Wizard for automated intersection modeling" },
+  { cmd: "ROUNDABOUTWIZARD", category: "design", problem: "A roundabout needs to be modeled with splitter islands and approach lanes", solution: "Launches the Roundabout Wizard for automated roundabout geometry creation" },
+  { cmd: "CANTANALYSIS", category: "design", problem: "Cant or superelevation on a railway alignment needs to be analyzed", solution: "Opens the cant analysis tools for railway alignment superelevation design" },
+  { cmd: "SUPERELEVATIONDESIGN", category: "design", problem: "Road superelevation rates need to be calculated and applied for horizontal curves", solution: "Calculates superelevation based on design speed and standards for each curve in the alignment" },
+  { cmd: "WIDENING", category: "design", problem: "Lane widening on curves needs to be calculated and applied to offset alignments", solution: "Calculates and applies lane widening to offset alignments at curves based on design standards" },
+  { cmd: "CRITICALSTATIONS", category: "design", problem: "Critical stations on an alignment need to be identified automatically", solution: "Identifies critical stations such as PCs, PTs, PIs, and high/low points along the alignment" },
+  { cmd: "ADDITIONALSUPERELEVATIONDESIGN", category: "design", problem: "Additional superelevation tables need to be added to an alignment", solution: "Adds supplementary superelevation rates to selected curves in an alignment" },
+  { cmd: "PVIBAND", category: "design", problem: "PVI data needs to be displayed in a band at the bottom of a profile view", solution: "Adds a PVI data band to a profile view showing PVI stations and elevations" },
+  { cmd: "SIGHTDISTANCEANALYSIS", category: "design", problem: "Stopping or passing sight distance along a profile needs to be checked", solution: "Analyzes the available sight distance along a profile relative to design standards" },
+  { cmd: "CLEARANCEANALYSIS", category: "design", problem: "Vertical clearance between a road and an overhead structure needs to be checked", solution: "Calculates the vertical clearance between a corridor surface and overhead objects" },
+  { cmd: "CORRIDORVOLUMECALCULATION", category: "design", problem: "Corridor earthwork volumes need to be calculated and reported", solution: "Calculates cut and fill volumes for a corridor using sampled sections and material definitions" },
+  { cmd: "REPORTSBROWSER", category: "design", problem: "Civil 3D standard reports need to be generated for data export", solution: "Opens the Reports Browser to run standard or custom reports on Civil 3D objects" },
+  { cmd: "XMLREPORT", category: "design", problem: "Civil 3D data needs to be exported to XML or LandXML format", solution: "Exports Civil 3D object data to LandXML format for data exchange with other software" },
+  { cmd: "LANDXMLIMPORT", category: "design", problem: "LandXML data from another application needs to be imported", solution: "Imports LandXML data including surfaces, alignments, profiles, and pipe networks" },
+  { cmd: "LANDXMLEXPORT", category: "design", problem: "Civil 3D objects need to be exported to LandXML for data exchange", solution: "Exports selected Civil 3D objects to a LandXML file for interoperability" },
+  { cmd: "CIVILVIEW", category: "design", problem: "Civil 3D design needs to be presented in a photorealistic 3D visualization", solution: "Opens Civil View for photorealistic rendering of Civil 3D designs with terrain and objects" },
+  { cmd: "NAVISWORKSEXPORT", category: "design", problem: "Civil 3D model needs to be exported to Navisworks for clash detection", solution: "Exports the Civil 3D model to NWC format for coordination in Autodesk Navisworks" },
+  { cmd: "BIM360SYNC", category: "design", problem: "Drawing data needs to be synchronized with BIM 360 or ACC cloud platform", solution: "Synchronizes the drawing and Civil 3D data with Autodesk Construction Cloud" },
+  { cmd: "INFRAWORKSEXPORT", category: "design", problem: "Civil 3D corridor needs to be sent to InfraWorks for conceptual design", solution: "Exports corridor and surface data to InfraWorks for conceptual visualization and analysis" },
+  { cmd: "CIVILCONNECTION", category: "design", problem: "Civil 3D data needs to be transferred to Revit for structural or MEP coordination", solution: "Uses Civil Connection to transfer Civil 3D geometry to Autodesk Revit projects" },
+];
+
+let filter = 'all';
+document.getElementById('btn-all').addEventListener('click',      () => setFilter('all'));
+document.getElementById('btn-drafting').addEventListener('click', () => setFilter('drafting'));
+document.getElementById('btn-design').addEventListener('click',   () => setFilter('design'));
+document.getElementById('searchInput').addEventListener('input',  render);
+
+function setFilter(f) {
+  filter = f;
+  document.querySelectorAll('.fbtn').forEach(b => b.classList.remove('on'));
+  const map = {all:'btn-all', drafting:'btn-drafting', design:'btn-design'};
+  document.getElementById(map[f]).classList.add('on');
+  render();
+}
+function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function hi(t,q){
+  if(!q) return esc(t);
+  return esc(t).replace(new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'),'<mark>$1</mark>');
+}
+function render(){
+  const q = document.getElementById('searchInput').value.toLowerCase().trim();
+  const f = COMMANDS.filter(c=>{
+    return (filter==='all'||c.category===filter) &&
+           (!q||c.cmd.toLowerCase().includes(q)||c.problem.toLowerCase().includes(q)||c.solution.toLowerCase().includes(q));
+  });
+  document.getElementById('stats').textContent = f.length+' of '+COMMANDS.length+' commands';
+  if(!f.length){ document.getElementById('grid').innerHTML='<div class="no-results">No commands found.</div>'; return; }
+  document.getElementById('grid').innerHTML = f.map(c=>`
+    <div class="card">
+      <div class="card-top">
+        <span class="cmd ${c.category}">${hi(c.cmd,q)}</span>
+        <div class="card-right">
+          <button class="copy-btn" data-cmd="${esc(c.cmd)}">COPY</button>
+          <span class="badge ${c.category}">${c.category==='drafting'?'Drafting':'Design'}</span>
+        </div>
+      </div>
+      <p class="problem-label">Problem</p>
+      <p class="problem-text">${hi(c.problem,q)}</p>
+      <p class="solution-text">${hi(c.solution,q)}</p>
+    </div>`).join('');
+  document.querySelectorAll('.copy-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      navigator.clipboard.writeText(btn.dataset.cmd);
+      btn.textContent='COPIED!'; btn.classList.add('ok');
+      setTimeout(()=>{btn.textContent='COPY';btn.classList.remove('ok');},1200);
+    });
+  });
+}
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){document.getElementById('searchInput').value='';render();}
+});
+render();
+
+</script>
+</body>
+</html>
